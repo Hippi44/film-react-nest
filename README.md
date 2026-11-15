@@ -1,36 +1,31 @@
 # FILM!
 
-## Установка
+В проекте есть API на NestJS и интерфейс на React.
 
-### MongoDB
+## MongoDB
 
-Установите MongoDB скачав дистрибутив с официального сайта или с помощью пакетного менеджера вашей ОС. Также можно воспользоваться Docker (см. ветку `feat/docker`.
+Запустите MongoDB. Перед первым запуском API загрузите данные из папки `backend`:
 
-Выполните скрипт `test/mongodb_initial_stub.js` в консоли `mongo`.
+```text
+mongoimport --uri mongodb://localhost:27017/prac --collection films --jsonArray --file test/mongodb_initial_stub.json
+```
 
-### Бэкенд
+Команду нужно выполнить один раз для пустой базы.
 
-Перейдите в папку с исходным кодом бэкенда
+## Backend
 
-`cd backend`
+```text
+cd backend
+npm ci
+Copy-Item .env.example .env
+npm run start:dev
+```
 
-Установите зависимости (точно такие же, как в package-lock.json) помощью команд
+## Frontend
 
-`npm ci` или `yarn install --frozen-lockfile`
-
-Создайте `.env` файл из примера `.env.example`, в нём укажите:
-
-* `DATABASE_DRIVER` - тип драйвера СУБД - в нашем случае это `mongodb` 
-* `DATABASE_URL` - адрес СУБД MongoDB, например `mongodb://127.0.0.1:27017/practicum`.  
-
-MongoDB должна быть установлена и запущена.
-
-Запустите бэкенд:
-
-`npm start:debug`
-
-Для проверки отправьте тестовый запрос с помощью Postman или `curl`.
-
-
-
-
+```text
+cd frontend
+npm ci
+Copy-Item .env.example .env
+npm run dev
+```

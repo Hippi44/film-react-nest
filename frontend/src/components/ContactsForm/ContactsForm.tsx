@@ -1,11 +1,6 @@
 import React from "react";
 import styles from './ContactsForm.module.scss';
-
-
-export type Contacts = {
-    email: string;
-    phone: string;
-};
+import type { Contacts } from '../../utils/api.ts';
 
 export type ContactsFormProps = {
     value: Contacts;
