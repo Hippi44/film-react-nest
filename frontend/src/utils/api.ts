@@ -10,11 +10,6 @@ export enum EnumApiMethods {
     GET = 'GET',
 }
 
-export type ErrorState = {
-    error: string;
-};
-
-
 export class Api {
     readonly baseUrl: string;
     protected _options: RequestInit;
@@ -30,9 +25,25 @@ export class Api {
     }
 
     protected async _handleResponse<T>(response: Response): Promise<T> {
-        if (response.ok) return response.json();
-        const data = (await response.json()) as ErrorState;
-        return Promise.reject(data.error ?? response.statusText);
+        let data: unknown;
+        try {
+            data = await response.json();
+        } catch {
+            throw new Error('Некорректный ответ сервера');
+        }
+
+        if (!response.ok) {
+            const message =
+                data !== null &&
+                typeof data === 'object' &&
+                'error' in data &&
+                typeof data.error === 'string'
+                    ? data.error
+                    : response.statusText;
+            throw new Error(message || 'Не удалось выполнить запрос');
+        }
+
+        return data as T;
     }
 
     protected async _get<T>(uri: string, method = EnumApiMethods.GET) {

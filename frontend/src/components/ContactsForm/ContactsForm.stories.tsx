@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { fn } from '@storybook/test';
-import { ContactsForm } from './ContactsForm';
+import { ContactsForm, type ContactsFormProps } from './ContactsForm';
 import {useState} from "react";
 
 const meta = {
@@ -24,7 +24,7 @@ export const Default: Story = {
       phone: '79999999999',
     }
   },
-  render: (props) => {
+  render: (props: ContactsFormProps) => {
     const [state, setState] = useState(props.value);
     return (
       <ContactsForm value={state} onChange={value => {

@@ -4,6 +4,12 @@ import {Contacts, FilmAPI, IFilmAPI, Movie, Session} from "../utils/api.ts";
 import {API_URL, CDN_URL} from "../utils/constants.ts";
 import {Button} from "../components/Button/Button.tsx";
 
+function getErrorMessage(error: unknown): string {
+    if (error instanceof Error) return error.message;
+    if (typeof error === 'string') return error;
+    return 'Не удалось выполнить запрос';
+}
+
 const flow : Record<Modals, { next: Modals | null, prev: Modals | null }> = {
     'schedule': { next: 'places', prev: null },
     'places': { next: 'basket', prev: 'schedule' },
@@ -29,7 +35,6 @@ export function useAppState() {
         session: `${ticket.day} ${ticket.time}`
     }));
 
-    const setFilms = (items: Movie[]) => dispatch({ type: 'setFilms', payload: items });
     const setSelectedFilm = (id: string) => dispatch({ type: 'selectFilm', payload: id });
     const setCurrentSchedule = (items: Session[]) => dispatch({ type: 'setSchedule', payload: items });
     const selectSession = (id: string) => dispatch({ type: 'selectSession', payload: id });
@@ -39,6 +44,7 @@ export function useAppState() {
     const setContacts = (contacts: Contacts) => dispatch({ type: 'setContacts', payload: contacts });
 
     const orderTickets = () => {
+        dispatch({ type: 'clearError' });
         api.current.orderTickets({
             email: state.contacts.email,
             phone: state.contacts.phone,
@@ -46,6 +52,8 @@ export function useAppState() {
         }).then(() => {
             dispatch({ type: 'clearBasket' });
             dispatch({ type: 'openModal', payload: 'success' });
+        }).catch((error: unknown) => {
+            dispatch({ type: 'setError', payload: getErrorMessage(error) });
         });
     };
 
@@ -77,7 +85,7 @@ export function useAppState() {
             'contacts': <Button
                 label={"Оплатить"}
                 onClick={orderTickets}
-                disabled={!state.contacts.email || !state.contacts.phone}
+                disabled={!state.contacts.email || !state.contacts.phone || state.isError}
             />,
             'success': null
         };
@@ -90,13 +98,22 @@ export function useAppState() {
     };
     const handleOpenFilm = () => {
         if (state.selectedFilm) {
-            api.current.getFilmSchedule(state.selectedFilm).then(setCurrentSchedule);
+            dispatch({ type: 'clearError' });
+            api.current.getFilmSchedule(state.selectedFilm)
+                .then(setCurrentSchedule)
+                .catch((error: unknown) => {
+                    dispatch({ type: 'setError', payload: getErrorMessage(error) });
+                });
         }
     };
 
     useEffect(() => {
-        api.current.getFilms().then(setFilms);
-    }, []);
+        api.current.getFilms()
+            .then((items: Movie[]) => dispatch({ type: 'setFilms', payload: items }))
+            .catch((error: unknown) => {
+                dispatch({ type: 'setError', payload: getErrorMessage(error) });
+            });
+    }, [dispatch]);
 
     return {
         state,

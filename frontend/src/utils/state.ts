@@ -1,4 +1,4 @@
-import {Contacts, Movie, Session, Ticket} from "./api.ts";
+import type {Contacts, Movie, Session, Ticket} from "./api.ts";
 
 export type Modals = 'schedule' | 'places' | 'basket' | 'contacts' | 'success';
 
@@ -22,6 +22,8 @@ export type Actions =
     | { type: 'addToBasket', payload: string }
     | { type: 'removeFromBasket', payload: string }
     | { type: 'setContacts', payload: Contacts }
+    | { type: 'setError', payload: string }
+    | { type: 'clearError' }
     | { type: 'openModal', payload: Modals }
     | { type: 'closeModal' }
     | { type: 'clearBasket' };
@@ -45,11 +47,11 @@ const addTicket = (state: AppState, key: string): AppState => {
     const [row, seat] = key.split(':').map(Number);
     const isExists = state.basket.some(ticket => ticket.row === row && ticket.seat === seat);
     const session = state.schedule.find(session => session.id === state.selectedSession);
-    if (session) {
+    if (session && state.selectedFilm && state.selectedSession) {
         if (!isExists) {
             const ticket = {
-                film: state.selectedFilm!,
-                session: state.selectedSession!,
+                film: state.selectedFilm,
+                session: state.selectedSession,
                 daytime: session.daytime,
                 day: session.day,
                 time: session.time,
@@ -87,7 +89,8 @@ const validateOrder = (state: AppState): AppState => {
         errors.push('Некорректный email');
     }
     //validate phone with regexp
-    if (state.contacts.phone && !/\+7\d{10}/.test(state.contacts.phone)) {
+    const phoneDigits = state.contacts.phone.replace(/\D/g, '');
+    if (state.contacts.phone && !/^7\d{10}$/.test(phoneDigits)) {
         errors.push('Некорректный телефон');
     }
 
@@ -112,23 +115,33 @@ export function appReducer(state: AppState, action: Actions): AppState {
             return {
                 ...state,
                 films: action.payload,
-                selectedFilm: action.payload[0].id
+                selectedFilm: action.payload[0]?.id ?? null,
+                schedule: [],
+                selectedSession: null,
+                basket: []
             };
         case 'selectFilm':
+            if (state.selectedFilm === action.payload) return state;
             return {
                 ...state,
-                selectedFilm: action.payload
+                selectedFilm: action.payload,
+                schedule: [],
+                selectedSession: null,
+                basket: []
             };
         case 'setSchedule':
             return {
                 ...state,
                 schedule: action.payload,
+                selectedSession: null,
+                basket: [],
                 modal: 'schedule'
             };
         case 'selectSession':
             return {
                 ...state,
-                selectedSession: action.payload
+                selectedSession: action.payload,
+                basket: state.selectedSession === action.payload ? state.basket : []
             };
         case 'addToBasket': return addTicket(state, action.payload);
         case 'removeFromBasket': return removeTicket(state, action.payload);
@@ -137,6 +150,18 @@ export function appReducer(state: AppState, action: Actions): AppState {
                 ...state,
                 contacts: action.payload
             });
+        case 'setError':
+            return {
+                ...state,
+                message: action.payload,
+                isError: true
+            };
+        case 'clearError':
+            return {
+                ...state,
+                message: '',
+                isError: false
+            };
         case 'openModal':
             return {
                 ...state,
@@ -145,7 +170,9 @@ export function appReducer(state: AppState, action: Actions): AppState {
         case 'closeModal':
             return {
                 ...state,
-                modal: null
+                modal: null,
+                message: '',
+                isError: false
             };
         case 'clearBasket':
             return {
