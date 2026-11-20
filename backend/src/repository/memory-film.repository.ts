@@ -16,7 +16,7 @@ export class MemoryFilmRepository implements FilmRepository {
   constructor() {
     const seedPath = path.resolve(
       __dirname,
-      '../../test/mongodb_initial_stub.json',
+      '../../test/films.stub.json',
     );
     const seed = JSON.parse(readFileSync(seedPath, 'utf8')) as FilmDto[];
 
