@@ -5,7 +5,7 @@ export const configProvider = {
   inject: [ConfigService],
   useFactory: (config: ConfigService): AppConfig => {
     const driver = config
-      .get<string>('DATABASE_DRIVER', 'postgres')
+      .get<string>('DATABASE_DRIVER', 'memory')
       .trim()
       .toLowerCase();
     const port = Number(config.get('PORT', 3000));
