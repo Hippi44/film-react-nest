@@ -1,43 +1,73 @@
 import { Module } from '@nestjs/common';
+import {
+  getRepositoryToken,
+  TypeOrmModule,
+  TypeOrmModuleOptions,
+} from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
 import type { AppConfig } from '../app.config.provider';
 import { SettingsModule } from '../config.module';
 import { FILMS_REPOSITORY, ORDERS_REPOSITORY } from './repository.constants';
-import type { FilmRepository } from './film.repository';
+import type { FilmsRepository } from './film.repository';
+import { FilmEntity } from './entities/film.entity';
+import { OrderEntity } from './entities/order.entity';
+import { ScheduleEntity } from './entities/schedule.entity';
 import { MemoryFilmRepository } from './memory-film.repository';
 import { MemoryOrdersRepository } from './memory-orders.repository';
-import { MongoConnectionService } from './mongo-connection.service';
-import { MongoFilmRepository } from './mongo-film.repository';
-import { MongoOrdersRepository } from './mongo-orders.repository';
+import { TypeOrmFilmRepository } from './typeorm-film.repository';
+import { TypeOrmOrdersRepository } from './typeorm-orders.repository';
 import type { OrdersRepository } from './order.repository';
 
 @Module({
-  imports: [SettingsModule],
+  imports: [
+    SettingsModule,
+    TypeOrmModule.forRootAsync({
+      imports: [SettingsModule],
+      inject: ['CONFIG'],
+      useFactory: (config: AppConfig): TypeOrmModuleOptions => ({
+        type: 'postgres',
+        url: config.database.url,
+        username: config.database.username,
+        password: config.database.password,
+        entities: [FilmEntity, ScheduleEntity, OrderEntity],
+        synchronize: config.database.driver === 'postgres',
+        manualInitialization: config.database.driver === 'memory',
+      }),
+    }),
+    TypeOrmModule.forFeature([FilmEntity, ScheduleEntity, OrderEntity]),
+  ],
   providers: [
-    MongoConnectionService,
     {
       provide: FILMS_REPOSITORY,
-      inject: [MongoConnectionService, 'CONFIG'],
+      inject: [
+        getRepositoryToken(FilmEntity),
+        getRepositoryToken(ScheduleEntity),
+        DataSource,
+        'CONFIG',
+      ],
       useFactory: async (
-        mongo: MongoConnectionService,
+        films: Repository<FilmEntity>,
+        schedules: Repository<ScheduleEntity>,
+        dataSource: DataSource,
         config: AppConfig,
-      ): Promise<FilmRepository> => {
+      ): Promise<FilmsRepository> => {
         if (config.database.driver === 'memory') {
           return new MemoryFilmRepository();
         }
-        return new MongoFilmRepository(await mongo.getConnection());
+        return new TypeOrmFilmRepository(films, schedules, dataSource);
       },
     },
     {
       provide: ORDERS_REPOSITORY,
-      inject: [MongoConnectionService, 'CONFIG'],
-      useFactory: async (
-        mongo: MongoConnectionService,
+      inject: [getRepositoryToken(OrderEntity), 'CONFIG'],
+      useFactory: (
+        orders: Repository<OrderEntity>,
         config: AppConfig,
-      ): Promise<OrdersRepository> => {
+      ): OrdersRepository => {
         if (config.database.driver === 'memory') {
           return new MemoryOrdersRepository();
         }
-        return new MongoOrdersRepository(await mongo.getConnection());
+        return new TypeOrmOrdersRepository(orders);
       },
     },
   ],

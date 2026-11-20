@@ -48,6 +48,7 @@ export class OrderService {
       }
 
       const film = await this.films.findById(ticket.film);
+      if (!film) throw new NotFoundException('Film not found');
       const session = film.schedule?.find((item) => item.id === ticket.session);
       if (!session) throw new NotFoundException('Session not found');
       if (ticket.row > session.rows || ticket.seat > session.seats) {
@@ -78,7 +79,17 @@ export class OrderService {
       });
     }
 
-    await this.films.reserveSeats(tickets);
+    const reservation = await this.films.reserveSeats(tickets);
+    if (!reservation.success) {
+      switch (reservation.reason) {
+        case 'film-not-found':
+          throw new NotFoundException('Film not found');
+        case 'session-not-found':
+          throw new NotFoundException('Session not found');
+        case 'seat-taken':
+          throw new BadRequestException('Seat is already taken');
+      }
+    }
 
     try {
       await this.orders.save(items, contacts);
