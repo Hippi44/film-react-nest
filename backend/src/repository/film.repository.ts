@@ -1,9 +1,11 @@
 import type { CreateOrderDto } from '../order/dto/order.dto';
 import type { FilmDto } from '../films/dto/films.dto';
 
-export interface FilmRepository {
+export interface FilmsRepository {
   findAll(): Promise<FilmDto[]>;
   findById(id: string): Promise<FilmDto>;
   reserveSeats(tickets: CreateOrderDto[]): Promise<void>;
   releaseSeats(tickets: CreateOrderDto[]): Promise<void>;
 }
+
+export type FilmRepository = FilmsRepository;

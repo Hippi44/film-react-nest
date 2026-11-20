@@ -7,17 +7,14 @@ import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
 import type { FilmDto } from '../films/dto/films.dto';
 import type { CreateOrderDto } from '../order/dto/order.dto';
-import type { FilmRepository } from './film.repository';
+import type { FilmsRepository } from './film.repository';
 
 @Injectable()
-export class MemoryFilmRepository implements FilmRepository {
+export class MemoryFilmRepository implements FilmsRepository {
   private readonly films: FilmDto[];
 
   constructor() {
-    const seedPath = path.resolve(
-      __dirname,
-      '../../test/films.stub.json',
-    );
+    const seedPath = path.resolve(__dirname, '../../test/films.stub.json');
     const seed = JSON.parse(readFileSync(seedPath, 'utf8')) as FilmDto[];
 
     this.films = seed.map((film) => ({

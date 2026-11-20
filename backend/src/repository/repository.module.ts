@@ -8,7 +8,7 @@ import { DataSource, Repository } from 'typeorm';
 import type { AppConfig } from '../app.config.provider';
 import { SettingsModule } from '../config.module';
 import { FILMS_REPOSITORY, ORDERS_REPOSITORY } from './repository.constants';
-import type { FilmRepository } from './film.repository';
+import type { FilmsRepository } from './film.repository';
 import { FilmEntity } from './entities/film.entity';
 import { OrderEntity } from './entities/order.entity';
 import { ScheduleEntity } from './entities/schedule.entity';
@@ -50,7 +50,7 @@ import type { OrdersRepository } from './order.repository';
         schedules: Repository<ScheduleEntity>,
         dataSource: DataSource,
         config: AppConfig,
-      ): Promise<FilmRepository> => {
+      ): Promise<FilmsRepository> => {
         if (config.database.driver === 'memory') {
           return new MemoryFilmRepository();
         }

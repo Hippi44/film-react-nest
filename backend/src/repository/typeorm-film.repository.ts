@@ -2,11 +2,11 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import type { FilmDto, FilmSessionDto } from '../films/dto/films.dto';
 import type { CreateOrderDto } from '../order/dto/order.dto';
-import type { FilmRepository } from './film.repository';
+import type { FilmsRepository } from './film.repository';
 import { FilmEntity } from './entities/film.entity';
 import { ScheduleEntity } from './entities/schedule.entity';
 
-export class TypeOrmFilmRepository implements FilmRepository {
+export class TypeOrmFilmRepository implements FilmsRepository {
   constructor(
     private readonly films: Repository<FilmEntity>,
     private readonly schedules: Repository<ScheduleEntity>,
